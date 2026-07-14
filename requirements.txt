@@ -1,0 +1,5 @@
+flask
+requests
+gunicorn
+anthropic     # app_claude.py
+google-genai  # app.py

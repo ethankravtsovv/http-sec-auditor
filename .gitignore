@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+httpsecaudit/
+apicheck/
+node_modules/
+.env
