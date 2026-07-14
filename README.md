@@ -43,6 +43,8 @@ docker run -p 8000:8000 -e ANTHROPIC_API_KEY=your-key http-sec-auditor
 | `PORT` | `5000` | Dev-server port |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Per-IP limit on `/scan` and `/phishing` |
 | `ALLOW_PRIVATE_TARGETS` | off | Set `1` to allow scanning private/loopback IPs (lab use) |
+| `TRUSTED_PROXY_HOPS` | `0` | Reverse proxies in front (usually `1`) — makes the rate limiter see real client IPs via X-Forwarded-For |
+| `WEB_CONCURRENCY` | `2` | gunicorn worker count (Docker) |
 
 ## The Three Tabs (Claude version)
 
@@ -74,6 +76,15 @@ Static explainer cards for the six audited headers — what each does, the attac
 - `Permissions-Policy` — restricts browser features (camera, mic, etc.)
 
 The app also sends these headers on its own responses (minus HSTS, which belongs on the TLS-terminating proxy), with a `'self'`-only CSP — all assets are compiled and served same-origin, no CDNs.
+
+## Serving It Publicly
+
+The Docker image runs gunicorn with threaded workers and is safe to expose, provided you:
+
+1. Put a TLS-terminating reverse proxy (nginx/Caddy/Cloudflare) in front and add `Strict-Transport-Security` there.
+2. Set `TRUSTED_PROXY_HOPS=1` so the per-IP rate limit keys on real client IPs, not the proxy's. Never set it without a proxy in front — X-Forwarded-For is spoofable.
+3. On cloud hosts, enforce IMDSv2 (or your provider's equivalent) or block egress to `169.254.169.254`. The SSRF guard's DNS check can be raced by a rebinding domain, so the metadata endpoint needs platform-level protection.
+4. Set a hard spend cap on the API key — every scan costs credit, and rate limiting only slows abuse, it doesn't stop it.
 
 ## Hardening
 

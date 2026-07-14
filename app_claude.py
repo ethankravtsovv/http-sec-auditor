@@ -16,9 +16,19 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from flask import Flask, render_template_string, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024  # form posts only; keep them small
+
+# Behind a reverse proxy every request arrives from the proxy's IP, which
+# would put all visitors in one rate-limit bucket. Set TRUSTED_PROXY_HOPS to
+# the number of proxies in front (usually 1) to take the client IP from
+# X-Forwarded-For instead. Leave unset when directly exposed — a spoofable
+# XFF header must never be trusted without a proxy that overwrites it.
+_proxy_hops = int(os.environ.get("TRUSTED_PROXY_HOPS", "0"))
+if _proxy_hops:
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=_proxy_hops, x_proto=_proxy_hops)
 
 SECURITY_HEADERS = [
     "Content-Security-Policy",

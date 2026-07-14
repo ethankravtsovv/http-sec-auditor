@@ -8,6 +8,8 @@ COPY app.py app_claude.py ./
 COPY static/ static/
 
 # Claude version by default; set APP_MODULE=app:app for the Gemini version.
-ENV APP_MODULE=app_claude:app
+# gthread workers: a scan can block ~90s worst case (slow target + redirects
+# + AI call), so sync workers would let one slow site stall everyone.
+ENV APP_MODULE=app_claude:app WEB_CONCURRENCY=2
 EXPOSE 8000
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 60 ${APP_MODULE}"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:8000 --workers ${WEB_CONCURRENCY} --worker-class gthread --threads 8 --timeout 90 ${APP_MODULE}"]
