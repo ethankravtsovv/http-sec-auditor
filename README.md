@@ -6,7 +6,7 @@ Two versions ship in this repo — same audit logic, different AI backend:
 
 | File | AI Backend | Default Model | API Key Env Var | Extra Dep | Tabs |
 |------|-----------|---------------|-----------------|-----------|------|
-| `app.py` | Google Gemini | `gemini-2.5-flash` | `GEMINI_API_KEY` | `google-genai` | Header audit only |
+| `app.py` | Google Gemini | `gemini-3.5-flash` | `GEMINI_API_KEY` | `google-genai` | Header audit only |
 | `app_claude.py` | Anthropic Claude | `claude-haiku-4-5` | `ANTHROPIC_API_KEY` | `anthropic` | Audit + Phishing Triage + Header Reference |
 
 ## Running It
@@ -20,6 +20,7 @@ export ANTHROPIC_API_KEY=your-key        # from console.anthropic.com
 
 # Gemini version:
 export GEMINI_API_KEY=your-key           # from aistudio.google.com
+export GEMINI_MODEL=gemini-3.5-flash     # optional — any model your key can use
 .venv/bin/python app.py                  # → http://localhost:5000
 ```
 
@@ -38,7 +39,7 @@ docker run -p 8000:8000 -e ANTHROPIC_API_KEY=your-key http-sec-auditor
 | Env var | Default | Purpose |
 |---------|---------|---------|
 | `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | — | AI backend credential |
-| `CLAUDE_MODEL` / `GEMINI_MODEL` | `claude-haiku-4-5` / `gemini-2.5-flash` | Model override |
+| `CLAUDE_MODEL` / `GEMINI_MODEL` | `claude-haiku-4-5` / `gemini-3.5-flash` | Model override |
 | `PORT` | `5000` | Dev-server port |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Per-IP limit on `/scan` and `/phishing` |
 | `ALLOW_PRIVATE_TARGETS` | off | Set `1` to allow scanning private/loopback IPs (lab use) |
@@ -92,7 +93,7 @@ Both AI functions send a plain-text summary and expect JSON back, and both fail 
 
 **Gemini (`gemini_grade()`):**
 - `google-genai` SDK with `response_mime_type="application/json"` to force raw JSON
-- If the default model is unavailable on your tier, override `GEMINI_MODEL` (check aistudio.google.com/apikey)
+- Google retires Gemini models fairly quickly — if scans come back without a grade and the log says the model is unavailable, set `GEMINI_MODEL` to a current one from aistudio.google.com/apikey
 
 ## Routes & Functions (Claude version)
 
